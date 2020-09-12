@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CME.EntityFramework;
+using CME.module;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -28,7 +29,16 @@ namespace Service
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            services.AddDbContext<ResolutionDBContext>(opts => opts.UseSqlServer(Configuration["ConnectionString:ResolutionDB"]));
+            services.ConfigureApplicationServices(Configuration);
+            services.ConfigureAutomapper();
+            services.AddSwaggerGen(c => { c.SwaggerDoc("V1", new Swashbuckle.AspNetCore.Swagger.Info {
+                Version = "V1",
+                Title = "ERC API",
+                Description = "ASP.NET Core Web API"
+            });
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                c.IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,6 +56,13 @@ namespace Service
 
             app.UseHttpsRedirection();
             app.UseMvc();
+            app.UseMvcWithDefaultRoute();
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("../swagger/v1/swagger.json", "CME API V1");
+                  c.RoutePrefix = string.Empty;
+            });
         }
     }
 }
